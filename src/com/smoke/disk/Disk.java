@@ -7,14 +7,13 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 
+import com.smoke.filesystem.FileSystem;
 import com.smoke.filesystem.INodeBlock;
 import com.smoke.filesystem.SuperBlock;
 
 public class Disk {
 	/*
-	 *	第0行为superblock
-	 *	第1到50行为200个inode,即50个inodeblock
-	 *	第51行到最后为数据块block
+	 *	文件每一行为1个block
 	 */
 //	磁盘文件名
 	private static final String DISK_NAME = "DISK";
@@ -22,19 +21,10 @@ public class Disk {
 	private static final int BLOCKS_NUM = 1024;
 //	BLOCK大小，即每个BLOCK包含的字符数
 	private static final int BLOCK_SIZE = 64;
-//	INode大小
-	private static final int INODE_SIZE = 16;
-//	定义空block
-	public static final String EMPTY_BLOCK = "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0";
-	
 
 
 	public static int getBlocksNum() {
 		return BLOCKS_NUM;
-	}
-
-	public static int getInodeSize() {
-		return INODE_SIZE;
 	}
 
 	public static Integer getBlockSize() {
@@ -48,31 +38,37 @@ public class Disk {
 	private BufferedReader br;
 	private BufferedWriter bw;
 	
-	public Disk() throws IOException {
+	public Disk() {
 		/*
 		 *	构造函数
 		 *	启动磁盘文件
 		 *	若没有磁盘文件，则创建并初始化一个磁盘文件
 		 */
 		disk = new File(DISK_NAME);
+	}
+	
+	public int loadDisk() throws IOException {
+		/*
+		 * 	返回0 DISK文件已存在且加载成功
+		 * 	返回1 DISK文件不存在，创建并初始化一个DISK文件
+		 */
 		if (disk.exists()) {
-			System.out.println("Found disk!");
+			return 0;
 		}else {
-			System.out.println("Not found disk!");
-			System.out.println("Initial disk now ...");
-			
 			disk.createNewFile();
 			initDisk();
+			return 1;
 		}
+		
 	}
 	
 	public void initDisk() throws IOException {
 		/*
-		 *	初始化磁盘
+		 *	使用字符串初始化磁盘
 		 */
 		setOut(); 
 		for(int i=0; i<BLOCKS_NUM-1; i++) {
-			bw.write(EMPTY_BLOCK);
+			bw.write(FileSystem.EMPTY_BLOCK);
 			bw.newLine();
 		}
 		bw.newLine();
