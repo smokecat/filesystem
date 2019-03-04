@@ -22,6 +22,7 @@ public class FileSystem {
 	
 	private Disk diskObj;
 	private SuperBlock superBlock;
+	private INodeBlock[] iNodeBlocks;
 	
 	public FileSystem() {
 		/*
@@ -30,6 +31,8 @@ public class FileSystem {
 		superBlock = SuperBlock.getSuperBlock();
 		
 		diskObj = new Disk();
+		
+		iNodeBlocks = new INodeBlock[diskObj.getBlocksNum()];
 	}
 	
 	public int loadDisk() throws IOException {
@@ -37,6 +40,14 @@ public class FileSystem {
 		 * 	加载磁盘文件
 		 */
 		int errCode = diskObj.loadDisk(superBlock);
+		
+//		若加载成功，则读取所有iNodeBlock
+		if(errCode == 0) {
+			superBlock.setSuperBlock(diskObj.Read(0));
+			for(int i=1; i<51; i++) {
+				iNodeBlocks[i].init(diskObj.Read(i), i);
+			}
+		}
 		return errCode;
 	}
 	
@@ -62,8 +73,10 @@ public class FileSystem {
 		writeSuperBlock();
 		
 //		写入根目录
-		INode rootDir = new INode(0, 1, 0);
-		rootDir.
+		INode rootDir = new INode(1, 1, 0, new int[] {1,0});
+		write(rootDir);
+		writeFile(rootDir, new String(" "));
+		
 	}
 	
 //	创建文件夹
@@ -78,13 +91,20 @@ public class FileSystem {
 		diskObj.write(superBlock);
 	}
 	
+//	写入inode
+	public void write(INode inode) throws IOException {
+		int[] pos = inode.getPos();
+		iNodeBlocks[pos[0]-1].setiNode(inode, pos[1]);
+		diskObj.write(iNodeBlocks[pos[0]-1].getPos(), iNodeBlocks[pos[0]-1]);
+	}
+	
 //	创建目录
 	public void mkdir(String dirName) {
 		
 	}
 	
 //	向磁盘写文件
-	public void writeFile(String file) throws IOException {
+	public void writeFile(INode inode,String file) throws IOException {
 		/*
 		 * 	向磁盘中写入文件
 		 */
@@ -95,6 +115,7 @@ public class FileSystem {
 			freeNo = superBlock.getFreeFile();
 			if(file.length()<=diskObj.getBlockSize()) {
 				diskObj.write(freeNo, file);
+				inode.setNextPtr(freeNo);
 				break;
 			}
 			diskObj.write(freeNo, file.substring(0, diskObj.getBlockSize()));
@@ -111,6 +132,8 @@ public class FileSystem {
 		return no;
 	}
 	
+//	查找指定id的INode
+	
 //	更新superblock的freeList
 	public void setNextFreeList() throws IOException {
 		superBlock.setFreeFile(getNextFreeBlock());
@@ -118,8 +141,12 @@ public class FileSystem {
 	}
 	
 //	获取下一个空闲block
-	public int getNextFreeBlock() {
+	public int getNextFreeBlock() throws IOException {
 		int freeBlock = superBlock.getFreeFile();
+		for(int i=freeBlock+1; i<diskObj.getBlocksNum(); i++) {
+			if(diskObj.Read(i).equals(EMPTY_BLOCK))
+				return i;
+		}
 		return freeBlock;
 	}
 }

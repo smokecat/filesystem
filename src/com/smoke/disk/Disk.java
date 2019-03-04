@@ -94,7 +94,7 @@ public class Disk {
 			}
 		}
 		closeIn();
-		return blockLine;
+		return blockLine.strip();
 	}
 	
 //	Write

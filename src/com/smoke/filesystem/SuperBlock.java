@@ -17,6 +17,15 @@ public class SuperBlock {
 	private SuperBlock(){
 	}
 	
+	public void setSuperBlock(String line) {
+		String[] pros = line.split(" ");
+		int[] intPros = new int[pros.length];
+		for(int i=0; i<pros.length; i++)
+			intPros[i] = Integer.parseInt(pros[i]);
+			setSuperBlock(intPros);
+	}
+	
+	
 	public void setSuperBlock(int[] properties) {
 		blocksNum = properties[0];
 		iNodeNum = properties[1];
