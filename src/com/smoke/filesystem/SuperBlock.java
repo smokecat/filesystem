@@ -1,21 +1,30 @@
 package com.smoke.filesystem;
 
-import com.smoke.disk.Disk;
 
 public class SuperBlock {
 	/*
 	 * 单例模式
 	 */
-	public static int blocksNum = Disk.getBlocksNum();	//block总数
-	public static int iNodeNum = 200;					//inode总数
-	public static int iNodeUsed = 0;					//inode已使用数
-	public static int fileBlocksUsed = 0;				//数据块block已使用数
-	public static int fileBegan = 51;					//数据块block开始位置
-	public static int freeFile = 51;					//空闲数据块block位置
+	private static int blocksNum;				//block总数
+	private static int iNodeNum;				//inode总数
+	private static int iNodeUsed;				//inode已使用数
+	private static int fileBlocksUsed;			//数据块block已使用数
+	private static int fileBegan;				//数据块block开始位置
+	private static int freeFile;				//空闲数据块block位置
 	
 	private static SuperBlock superBlock = new SuperBlock(); 
 	
-	private SuperBlock(){}
+	private SuperBlock(){
+	}
+	
+	public void setSuperBlock(int[] properties) {
+		blocksNum = properties[0];
+		iNodeNum = properties[1];
+		iNodeUsed = properties[2];
+		fileBlocksUsed = properties[3];
+		fileBegan = properties[4];
+		freeFile = properties[5];
+	}
 	
 	public static SuperBlock getSuperBlock() {
 		return superBlock;
@@ -54,6 +63,54 @@ public class SuperBlock {
 		}
 		
 		return superBlockLine;
+	}
+
+	public int getBlocksNum() {
+		return blocksNum;
+	}
+
+	public void setBlocksNum(int blocksNum) {
+		SuperBlock.blocksNum = blocksNum;
+	}
+
+	public int getiNodeNum() {
+		return iNodeNum;
+	}
+
+	public void setiNodeNum(int iNodeNum) {
+		SuperBlock.iNodeNum = iNodeNum;
+	}
+
+	public int getiNodeUsed() {
+		return iNodeUsed;
+	}
+
+	public void setiNodeUsed(int iNodeUsed) {
+		SuperBlock.iNodeUsed = iNodeUsed;
+	}
+
+	public int getFileBlocksUsed() {
+		return fileBlocksUsed;
+	}
+
+	public void setFileBlocksUsed(int fileBlocksUsed) {
+		SuperBlock.fileBlocksUsed = fileBlocksUsed;
+	}
+
+	public int getFileBegan() {
+		return fileBegan;
+	}
+
+	public void setFileBegan(int fileBegan) {
+		SuperBlock.fileBegan = fileBegan;
+	}
+
+	public int getFreeFile() {
+		return freeFile;
+	}
+
+	public void setFreeFile(int freeFile) {
+		SuperBlock.freeFile = freeFile;
 	}
 	
 	

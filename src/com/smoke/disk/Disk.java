@@ -23,11 +23,11 @@ public class Disk {
 	private static final int BLOCK_SIZE = 64;
 
 
-	public static int getBlocksNum() {
+	public int getBlocksNum() {
 		return BLOCKS_NUM;
 	}
 
-	public static Integer getBlockSize() {
+	public Integer getBlockSize() {
 		return BLOCK_SIZE;
 	}
 	
@@ -38,6 +38,8 @@ public class Disk {
 	private BufferedReader br;
 	private BufferedWriter bw;
 	
+	private SuperBlock superBlock;
+	
 	public Disk() {
 		/*
 		 *	构造函数
@@ -47,24 +49,26 @@ public class Disk {
 		disk = new File(DISK_NAME);
 	}
 	
-	public int loadDisk() throws IOException {
+	public int loadDisk(SuperBlock sb) throws IOException {
 		/*
 		 * 	返回0 DISK文件已存在且加载成功
 		 * 	返回1 DISK文件不存在，创建并初始化一个DISK文件
 		 */
-		if (disk.exists()) {
+		Boolean flag = disk.exists();
+		superBlock = sb;
+		if (flag) {
 			return 0;
 		}else {
 			disk.createNewFile();
-			initDisk();
+			formatDisk();
 			return 1;
 		}
 		
 	}
 	
-	public void initDisk() throws IOException {
+	public void formatDisk() throws IOException {
 		/*
-		 *	使用字符串初始化磁盘
+		 *	使用字符串格式化磁盘
 		 */
 		setOut(); 
 		for(int i=0; i<BLOCKS_NUM-1; i++) {
@@ -143,7 +147,7 @@ public class Disk {
 		 *	向磁盘内写入文件数据
 		 */
 //		判断写入位置是否为数据块
-		if (blockNo < SuperBlock.fileBegan) {
+		if (blockNo < superBlock.getFileBegan()) {
 			System.out.println("非法写入");
 			return;
 		}
