@@ -21,23 +21,100 @@ public class FileSystem {
 	}
 	
 	private Disk diskObj;
+	private SuperBlock superBlock;
 	
 	public FileSystem() {
+		/*
+		 * 	构造函数
+		 */
+		superBlock = SuperBlock.getSuperBlock();
+		
 		diskObj = new Disk();
 	}
 	
 	public int loadDisk() throws IOException {
-		int errCode = diskObj.loadDisk();
+		/*
+		 * 	加载磁盘文件
+		 */
+		int errCode = diskObj.loadDisk(superBlock);
 		return errCode;
 	}
 	
-	public void initDisk() throws IOException {
+	public void formatDisk() throws IOException {
 		/*
 		 * 	格式化磁盘
 		 */
-		diskObj.initDisk();
+		diskObj.formatDisk();
+		
+//		格式化磁盘后生成文件系统，即初始化
 	}
 	
-//	创建文件
+	public void initializeOS() throws IOException {
+		/*
+		 * 	初始化文件系统
+		 */
+		System.out.println("Initializing the file system ...");
+
+//		写入superBlock
+//		设置superBlock的属性
+		int[] proterties = new int[] {diskObj.getBlocksNum(),200,0,0,51,51};
+		superBlock.setSuperBlock(proterties);
+		writeSuperBlock();
+		
+//		写入根目录
+		
+		
+	}
 	
+//	创建文件夹
+	public void mkdir() {
+		/*
+		 * 	创建文件夹
+		 */
+	}
+	
+//	写入superblock
+	public void writeSuperBlock() throws IOException {
+		diskObj.write(superBlock);
+	}
+	
+//	向磁盘写文件
+	public void writeFile(String file) throws IOException {
+		/*
+		 * 	向磁盘中写入文件
+		 */
+		int freeNo;
+		int fileLen = file.length();
+		
+		while(fileLen>0) {
+			freeNo = superBlock.getFreeFile();
+			if(file.length()<=diskObj.getBlockSize()) {
+				diskObj.write(freeNo, file);
+				break;
+			}
+			diskObj.write(freeNo, file.substring(0, diskObj.getBlockSize()));
+			file = file.substring(diskObj.getBlockSize());
+		}
+		
+//		向空闲block写入数据后更新block
+		setNextFreeList();
+	}
+	
+//	获取含有空闲inode的行数
+	public int getINodeBlockNo() {
+		int no = 1;
+		return no;
+	}
+	
+//	更新superblock的freeList
+	public void setNextFreeList() throws IOException {
+		superBlock.setFreeFile(getNextFreeBlock());
+		diskObj.write(superBlock);
+	}
+	
+//	获取下一个空闲block
+	public int getNextFreeBlock() {
+		int freeBlock = superBlock.getFreeFile();
+		return freeBlock;
+	}
 }
