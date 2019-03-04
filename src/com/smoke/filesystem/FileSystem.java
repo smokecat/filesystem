@@ -45,8 +45,8 @@ public class FileSystem {
 		 * 	格式化磁盘
 		 */
 		diskObj.formatDisk();
-		
 //		格式化磁盘后生成文件系统，即初始化
+		initializeOS();
 	}
 	
 	public void initializeOS() throws IOException {
@@ -62,8 +62,8 @@ public class FileSystem {
 		writeSuperBlock();
 		
 //		写入根目录
-		
-		
+		INode rootDir = new INode(0, 1, 0);
+		rootDir.
 	}
 	
 //	创建文件夹
@@ -76,6 +76,11 @@ public class FileSystem {
 //	写入superblock
 	public void writeSuperBlock() throws IOException {
 		diskObj.write(superBlock);
+	}
+	
+//	创建目录
+	public void mkdir(String dirName) {
+		
 	}
 	
 //	向磁盘写文件
