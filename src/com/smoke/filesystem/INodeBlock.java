@@ -81,5 +81,9 @@ public class INodeBlock {
 		iNodes[iPos] = iNode;
 	}
 
+	public static int getInodesPerBlock() {
+		return INODES_PER_BLOCK;
+	}
+
 
 }

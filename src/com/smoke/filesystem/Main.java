@@ -10,12 +10,12 @@ public class Main {
 		/*
 		 * 	加载文件系统
 		 */
-		FileSystem SmokeOS = new FileSystem();
+		FileSystem smokeOS = new FileSystem();
 		
 		/*
 		 * 	加载DISK文件
 		 */
-		int errCode = SmokeOS.loadDisk();
+		int errCode = smokeOS.loadDisk();
 		switch (errCode) {
 		case 0:
 			System.out.println("DISK file exists!");
@@ -24,7 +24,7 @@ public class Main {
 			String readStr = sc.next();
 			if (readStr.equals("y") || readStr.equals("Y")) {
 				System.out.println("Formating the DISK file now, don't close the programme now...");
-				SmokeOS.formatDisk();
+				smokeOS.formatDisk();
 				System.out.println("Success!");
 			}
 			sc.close();	
