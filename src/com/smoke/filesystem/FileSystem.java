@@ -73,17 +73,64 @@ public class FileSystem {
 		writeSuperBlock();
 		
 //		写入根目录
-		INode rootDir = new INode(1, 1, 0, new int[] {1,0});
+		INode rootDir = new INode(1, 0, new int[] {1,0});
+		rootDir.setId(1);
 		write(rootDir);
-		writeFile(rootDir, new String(" "));
+		writeFile(rootDir, new String("1 ."));
+		
+//		添加配置文件夹
+		mkdir(rootDir, 0, "etc");
+//			添加用户配置文件
+		createFile(getINode(getFileId(rootDir, "etc")), 0, "shadow", "0:root:123456 1:smoke:smoke");
+		
+//		添加用户家目录
+		mkdir(rootDir,  0, "home");
+//			添加root和smoke家目录
+		mkdir(getINode(getFileId(rootDir, "home")), 0, "root");
+		mkdir(getINode(getFileId(rootDir, "home")), 0, "smoke");
 		
 	}
 	
-//	创建文件夹
-	public void mkdir() {
+//	创建目录
+	public void mkdir(INode parent, int owner, String dirName) throws IOException {
 		/*
-		 * 	创建文件夹
+		 * 	创建目录
 		 */
+		INode dir = getFreeINode();
+		dir.setId();
+		dir.setFlag(1);
+		dir.setOwner(owner);
+		dir.setParent(parent);
+		String file = new String(dir.getId() + " ." + parent.getId() + " ..");
+		addChild(parent, dir, dirName, file);
+	}
+	
+//	创建文件
+	public void createFile(INode parent, int owner, String fileName, String file) throws IOException {
+		INode fileInode = getFreeINode();
+		fileInode.setId();
+		fileInode.setFlag(2);
+		fileInode.setOwner(owner);
+		fileInode.setParent(parent);
+		addChild(parent, fileInode, fileName, file);
+	}
+	
+//	向目录中添加子文件
+	public void addChild(INode parent, INode child, String childName, String file) throws IOException {
+		/*
+		 * 	增加父目录中的节点
+		 * 	更新父目录
+		 * 	添加子文件
+		 */
+		int[] dirPtr = parent.getPtr();
+		String parFile = new String("");
+		for(int i=0; i<dirPtr.length; i++) {
+			if(dirPtr[i]!=0)
+				parFile += diskObj.Read(dirPtr[i]);
+		}
+		parFile = (parFile + " " + child.getId() + " " + childName);
+		writeFile(parent, parFile);
+		writeFile(child, file);
 	}
 	
 //	写入superblock
@@ -98,10 +145,7 @@ public class FileSystem {
 		diskObj.write(iNodeBlocks[pos[0]-1].getPos(), iNodeBlocks[pos[0]-1]);
 	}
 	
-//	创建目录
-	public void mkdir(String dirName) {
-		
-	}
+
 	
 //	向磁盘写文件
 	public void writeFile(INode inode,String file) throws IOException {
@@ -110,6 +154,7 @@ public class FileSystem {
 		 */
 		int freeNo;
 		int fileLen = file.length();
+		file = file.strip();
 		
 		while(fileLen>0) {
 			freeNo = superBlock.getFreeFile();
@@ -120,19 +165,74 @@ public class FileSystem {
 			}
 			diskObj.write(freeNo, file.substring(0, diskObj.getBlockSize()));
 			file = file.substring(diskObj.getBlockSize());
+
+//			写入inode
+			write(inode);
+//			向空闲block写入数据后更新block
+			setNextFreeList();
 		}
 		
-//		向空闲block写入数据后更新block
-		setNextFreeList();
 	}
 	
-//	获取含有空闲inode的行数
-	public int getINodeBlockNo() {
-		int no = 1;
-		return no;
+//	获取空闲inode
+	public INode getFreeINode() {
+		for(int i=0; i<50; i++) {
+			for(int j=0; j<INodeBlock.getInodesPerBlock();j++){
+				if(iNodeBlocks[i].getiNodes()[j].getFlag() == 0)
+					return iNodeBlocks[i].getiNodes()[j];
+			}
+		}
+		return null;
+	}
+	
+//	
+	public String getChildName(INode inode, int cId) throws IOException {
+		/*
+		 * 	如果是目录inode，则根据cId获取文件名
+		 */
+		int[] dirPtr = inode.getPtr();
+		String file = new String("");
+		for(int i=0; i<dirPtr.length; i++) {
+			if(dirPtr[i]!=0)
+				file += diskObj.Read(dirPtr[i]);
+		}
+		String[] ids = file.split(" ");
+		for(int i=0; i<ids.length; i+=2) {
+			if(ids[i] == String.valueOf(cId)) {
+				return ids[i+1];
+			}
+		}
+		return null;
+	}
+	
+//	获取子文件的id
+	public int getFileId(INode parent, String name) throws IOException {
+		/*
+		 * 
+		 */
+		int[] dirPtr = parent.getPtr();
+		String file = new String("");
+		for(int i=0; i<dirPtr.length; i++) {
+			if(dirPtr[i]!=0)
+				file += diskObj.Read(dirPtr[i]);
+		}
+		String[] ids = file.split(" ");
+		for(int i=0; i<ids.length; i+=2) {
+			if(ids[i+1] == name) {
+				return Integer.valueOf(ids[i]);
+			}
+		}
+		return -1;
 	}
 	
 //	查找指定id的INode
+	public INode getINode(int id) {
+		for(int i=0; i<iNodeBlocks.length; i++) {
+			if(iNodeBlocks[i].searchNode(id)[0] == 1)
+				return iNodeBlocks[i].getiNodes()[iNodeBlocks[i].searchNode(id)[1]];
+		}
+		return  null;
+	}
 	
 //	更新superblock的freeList
 	public void setNextFreeList() throws IOException {
@@ -143,7 +243,7 @@ public class FileSystem {
 //	获取下一个空闲block
 	public int getNextFreeBlock() throws IOException {
 		int freeBlock = superBlock.getFreeFile();
-		for(int i=freeBlock+1; i<diskObj.getBlocksNum(); i++) {
+		for(int i=freeBlock; i<diskObj.getBlocksNum(); i++) {
 			if(diskObj.Read(i).equals(EMPTY_BLOCK))
 				return i;
 		}

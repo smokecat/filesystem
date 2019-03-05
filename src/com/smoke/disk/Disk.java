@@ -155,6 +155,8 @@ public class Disk {
 		setIn();
 		setOut();
 		
+		file = file.strip();
+		
 		String disk = ""; 
 		bw.write(SuperBlock.getLine());
 		br.readLine();

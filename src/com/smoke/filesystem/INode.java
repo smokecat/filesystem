@@ -8,6 +8,7 @@ public class INode {
 	private int owner;			//	文件所属者id,root用户为0
 	private int[] ptr;			//	指向存储数据块
 	private int[] pos;			//	此inode的位置信息{行，列}
+	private INode parent;		//	父节点
 	
 	public INode() {
 		id = 0;
@@ -17,8 +18,7 @@ public class INode {
 		pos = new int[2];
 	}
 	
-	public INode(int i, int f, int o, int[] p) {
-		id = i;
+	public INode(int f, int o, int[] p) {
 		flag = f;
 		owner = o;
 		ptr = new int[FileSystem.getInodeSize()-3];
@@ -67,6 +67,10 @@ public class INode {
 		return id;
 	}
 
+	public void setId() {
+		id = pos[0]*4 + pos[1] + 1;
+	}
+	
 	public void setId(int id) {
 		this.id = id;
 	}
@@ -89,6 +93,14 @@ public class INode {
 
 	public void setPtr(int[] ptr) {
 		this.ptr = ptr;
+	}
+
+	public INode getParent() {
+		return parent;
+	}
+
+	public void setParent(INode parent) {
+		this.parent = parent;
 	}
 	
 }
