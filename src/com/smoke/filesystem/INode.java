@@ -26,7 +26,9 @@ public class INode {
 		pos = p;
 	}
 	
-	public void setNextPtr(int ptrNo) {
+
+	
+	public void setPtrNo(int ptrNo) {
 		/*
 		 * 	设置文件存储块指针
 		 */
@@ -48,6 +50,10 @@ public class INode {
 	@Override
 	public String toString() {
 		String iNodeStr = "";
+		iNodeStr = (String.valueOf(id)+" "+String.valueOf(flag)+" "+String.valueOf(owner)+" ");
+		for(int i=0; i<ptr.length; i++) {
+			iNodeStr = (iNodeStr+String.valueOf(ptr[i])+" ");
+		}
 		
 		return iNodeStr;
 	}
@@ -69,7 +75,7 @@ public class INode {
 	}
 
 	public void setId() {
-		id = pos[0]*4 + pos[1] + 1;
+		id = (pos[0]-1)*4 + pos[1] + 1;
 	}
 	
 	public void setId(int id) {

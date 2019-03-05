@@ -6,6 +6,12 @@ public class INodeBlock {
 	private INode[] iNodes;
 	private int pos;				//	位置信息，表示所在行
 	
+	public INodeBlock(){
+		iNodes = new INode[INODES_PER_BLOCK];
+		for(int i=0; i<INODES_PER_BLOCK; i++) {
+			iNodes[i] = new INode();
+		}
+	}
 	public INodeBlock(String line, int p) {
 		/*
 		 * 	构造
@@ -18,6 +24,9 @@ public class INodeBlock {
 		 * 	构造
 		 */
 		iNodes = new INode[INODES_PER_BLOCK];
+		for(int i=0; i<INODES_PER_BLOCK; i++) {
+			iNodes[i] = new INode();
+		}
 		pos = p;
 		
 		String[] blockStr = line.split(" ");
@@ -29,8 +38,9 @@ public class INodeBlock {
 			iNodes[i].setFlag(Integer.parseInt(blockStr[j++]));
 			iNodes[i].setOwner(Integer.parseInt(blockStr[j++]));
 			for(int k=0; k<iNodes[i].getPtr().length; k++) {
-				iNodes[i].setNextPtr(Integer.parseInt(blockStr[j++]));
+				iNodes[i].setPtrNo(Integer.parseInt(blockStr[j++]));
 			}
+			iNodes[i].setPos(new int[] {pos, i});
 		}
 		
 	}

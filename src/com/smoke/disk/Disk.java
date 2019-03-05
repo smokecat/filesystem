@@ -85,15 +85,15 @@ public class Disk {
 		 * 	读取数据块
 		 */
 		setIn();
-		String blockLine = "";
+		String[] file = new String[BLOCKS_NUM];
 		for(int i=0; i<BLOCKS_NUM; i++) {
+			file[i] = br.readLine();
 			if(i == blockNo) {
-				blockLine = br.readLine();
-				break;
+				return file[i].strip();
 			}
 		}
 		closeIn();
-		return blockLine.strip();
+		return null;
 	}
 	
 //	Write
@@ -102,17 +102,20 @@ public class Disk {
 		 *	向磁盘内写入SuperBlock
 		 */
 		setIn();
+
+		String[] file = new String[BLOCKS_NUM];
+		for(int i=0; i<BLOCKS_NUM; i++) {
+			file[i] = br.readLine();
+		}
+		file[0] = SuperBlock.getLine();
+
 		setOut();
 		
-		String disk = "";
 		for(int i = 0; i < BLOCKS_NUM; i++) {
-			disk = br.readLine();
+			bw.write(file[i]);
 			bw.newLine();
-			bw.write(disk);
 		}
 		
-		
-		bw.write(disk);
 //		bw.flush();
 
 		closeIn();
@@ -124,26 +127,26 @@ public class Disk {
 		 *	 向磁盘内写入INode
 		 */
 		setIn();
-		setOut();
+
+		String[] file = new String[BLOCKS_NUM];
+		for(int i=0; i<BLOCKS_NUM; i++) {
+			file[i] = br.readLine();
+		}
+//		file[0] = SuperBlock.getLine();
 		
-		String disk = ""; 
-		bw.write(SuperBlock.getLine());
-		br.readLine();
-		for(int i = 1; i < BLOCKS_NUM; i++) {
-			disk = br.readLine();
+		file[blockNo] = iNodeBlock.getLine();
+
+		setOut();
+		for(int i = 0; i < BLOCKS_NUM; i++) {
+			bw.write(file[i]);
 			bw.newLine();
-			if(i == blockNo) {
-				bw.write(iNodeBlock.getLine());
-			}else {
-				bw.write(disk);
-			}
 		}
 
 		closeIn();
 		closeOut();
 	}
 	
-	public void write(int blockNo, String file) throws IOException {
+	public void write(int blockNo, String data) throws IOException {
 		/*
 		 *	向磁盘内写入文件数据
 		 */
@@ -154,21 +157,19 @@ public class Disk {
 		}
 		
 		setIn();
+
+		String[] file = new String[BLOCKS_NUM];
+		for(int i=0; i<BLOCKS_NUM; i++) {
+			file[i] = br.readLine();
+		}
+//		file[0] = SuperBlock.getLine();
+		
+		file[blockNo] = data;
+
 		setOut();
-		
-		file = file.strip();
-		
-		String disk = ""; 
-		bw.write(SuperBlock.getLine());
-		br.readLine();
-		for(int i = 1; i < BLOCKS_NUM; i++) {
-			disk = br.readLine();
+		for(int i = 0; i < BLOCKS_NUM; i++) {
+			bw.write(file[i]);
 			bw.newLine();
-			if(i == blockNo) {
-				bw.write(file);
-			}else {
-				bw.write(disk);
-			}
 		}
 		
 		closeIn();
@@ -185,9 +186,10 @@ public class Disk {
 	public void setIn() throws IOException {
 		fr = new FileReader(disk);
 		br = new BufferedReader(fr);
-		br.mark(Integer.MAX_VALUE);
+		br.mark(Integer.MAX_VALUE/2);
 	}
 	public void setOut() throws IOException {
+		disk = new File(DISK_NAME);
 		fw = new FileWriter(disk);
 		bw = new BufferedWriter(fw);
 	}

@@ -32,7 +32,7 @@ public class FileSystem {
 		
 		diskObj = new Disk();
 		
-		iNodeBlocks = new INodeBlock[diskObj.getBlocksNum()];
+		iNodeBlocks = new INodeBlock[50];
 	}
 	
 	public int loadDisk() throws IOException {
@@ -72,9 +72,15 @@ public class FileSystem {
 		superBlock.setSuperBlock(proterties);
 		writeSuperBlock();
 		
+//		初始化inodeblocks
+		initINodeBlocks();
+		
 //		写入根目录
-		INode rootDir = new INode(1, 0, new int[] {1,0});
-		rootDir.setId(1);
+		INode rootDir = iNodeBlocks[0].getiNodes()[0];
+		rootDir.setPos(new int[] {1,0});
+		rootDir.setId();
+		rootDir.setFlag(1);
+		rootDir.setOwner(0);
 		write(rootDir);
 		writeFile(rootDir, new String("1 ."));
 		
@@ -90,7 +96,14 @@ public class FileSystem {
 		mkdir(getINode(getFileId(rootDir, "home")), 0, "smoke");
 		
 		
-		System.out.println("Success!");
+		System.out.println("success: Initialize the SmokeOS!");
+	}
+	
+//	初始化inodeblocks
+	public void initINodeBlocks() {
+		for(int i=0; i<iNodeBlocks.length; i++) {
+			iNodeBlocks[i] = new INodeBlock(EMPTY_BLOCK, i);
+		}
 	}
 	
 //	创建目录
@@ -103,7 +116,7 @@ public class FileSystem {
 		dir.setFlag(1);
 		dir.setOwner(owner);
 		dir.setParent(parent);
-		String file = new String(dir.getId() + " ." + parent.getId() + " ..");
+		String file = new String(dir.getId() + " . " + parent.getId() + " .. ");	
 		addChild(parent, dir, dirName, file);
 	}
 	
@@ -125,13 +138,9 @@ public class FileSystem {
 		 * 	添加子文件
 		 */
 		int[] dirPtr = parent.getPtr();
-		String parFile = new String("");
-		for(int i=0; i<dirPtr.length; i++) {
-			if(dirPtr[i]!=0)
-				parFile += diskObj.Read(dirPtr[i]);
-		}
+		String parFile = readFile(parent);
 		parFile = (parFile + " " + child.getId() + " " + childName);
-		writeFile(parent, parFile);
+		updateFile(parent, parFile);
 		writeFile(child, file);
 	}
 	
@@ -144,7 +153,7 @@ public class FileSystem {
 	public void write(INode inode) throws IOException {
 		int[] pos = inode.getPos();
 		iNodeBlocks[pos[0]-1].setiNode(inode, pos[1]);
-		diskObj.write(iNodeBlocks[pos[0]-1].getPos(), iNodeBlocks[pos[0]-1]);
+		diskObj.write(pos[0], iNodeBlocks[pos[0]-1]);
 	}
 	
 
@@ -155,33 +164,113 @@ public class FileSystem {
 		 * 	向磁盘中写入文件
 		 */
 		int freeNo;
-		int fileLen = file.length();
-		file = file.strip();
 		
-		while(fileLen>0) {
+		while(file.length()>0) {
 			freeNo = superBlock.getFreeFile();
 			if(file.length()<=diskObj.getBlockSize()) {
 				diskObj.write(freeNo, file);
-				inode.setNextPtr(freeNo);
+				inode.setPtrNo(freeNo);
 				break;
 			}
 			diskObj.write(freeNo, file.substring(0, diskObj.getBlockSize()));
 			file = file.substring(diskObj.getBlockSize());
 
+		}
 //			写入inode
 			write(inode);
 //			向空闲block写入数据后更新block
 			setNextFreeList();
+	}
+	
+//	写文件到指定block
+	public void writeFile(INode inode, String file, int[]ptr) throws IOException {
+		/*
+		 * 	写文件
+		 */
+		int freeNo;
+		int[] newPtr = new int[ptr.length];
+		for(int i=0; i<ptr.length && file.length()>0; i++) {
+			if(file.length() <= diskObj.getBlockSize()) {
+				freeNo = ptr[i];
+				newPtr[i] = ptr[i];
+				diskObj.write(freeNo, file);
+				break;
+			}else {
+				freeNo = ptr[i];
+				newPtr[i] = ptr[i];
+				diskObj.write(freeNo, file.substring(0, diskObj.getBlockSize()));
+				file = file.substring(diskObj.getBlockSize());
+			}
+		inode.setPtr(newPtr);
 		}
+	}
+	
+//	读取文件
+	public String readFile(INode inode) throws IOException {
+		/*
+		 * 	读取inode的文件
+		 */
+		String file = "";
+		int[] filePtr = inode.getPtr();
+		for(int i=0; i<filePtr.length; i++) {
+			if(filePtr[i]==0)
+				break;
+			String line = diskObj.Read(filePtr[i]);
+			file += line;
+		}
+		return file;
+	}
+	
+//	更新文件
+	public void updateFile(INode inode,String file) throws IOException {
+		/*
+		 * 	更新已存在的文件
+		 */
+//		String fileStr = readFile(inode);
+		int[] filePtr = inode.getPtr();
+		deleteData(filePtr);
+		writeFile(inode, file, filePtr);
+		write(inode);
+	}
+	
+//	删除文件
+	public void deleteFile(INode inode) throws IOException {
+		/*
+		 * 删除文件
+		 */
+		if(inode.getFlag()!=2) {
+			System.out.println("error: isn't a file.");
+			return;
+		}
+		int[] filePtr = inode.getPtr();
+		int[] pos = inode.getPos();
+		iNodeBlocks[pos[0]-1].setiNode(new INode(), pos[1]);
 		
+		deleteData(filePtr);
+	}
+	
+//	清楚指定区域的数据块
+	public void deleteData(int[] ptr) throws IOException {
+		/*
+		 * 	清除数据块block
+		 */
+		for(int i=0; i<ptr.length; i++) {
+			if(ptr[i]==0) {
+				break;
+			}
+			diskObj.write(ptr[i], EMPTY_BLOCK);
+		}
 	}
 	
 //	获取空闲inode
 	public INode getFreeINode() {
 		for(int i=0; i<50; i++) {
 			for(int j=0; j<INodeBlock.getInodesPerBlock();j++){
-				if(iNodeBlocks[i].getiNodes()[j].getFlag() == 0)
-					return iNodeBlocks[i].getiNodes()[j];
+				if(iNodeBlocks[i].getiNodes()[j].getFlag() == 0) {
+					INode inode = iNodeBlocks[i].getiNodes()[j];
+					inode.setPos(new int[] {i+1, j});
+					return inode;
+				}
 			}
 		}
 		return null;
@@ -212,15 +301,12 @@ public class FileSystem {
 		/*
 		 * 
 		 */
-		int[] dirPtr = parent.getPtr();
-		String file = new String("");
-		for(int i=0; i<dirPtr.length; i++) {
-			if(dirPtr[i]!=0)
-				file += diskObj.Read(dirPtr[i]);
-		}
+		String file = readFile(parent);
+		
+//		行
 		String[] ids = file.split(" ");
 		for(int i=0; i<ids.length; i+=2) {
-			if(ids[i+1] == name) {
+			if(ids[i+1].equals(name)) {
 				return Integer.valueOf(ids[i]);
 			}
 		}
@@ -245,9 +331,12 @@ public class FileSystem {
 //	获取下一个空闲block
 	public int getNextFreeBlock() throws IOException {
 		int freeBlock = superBlock.getFreeFile();
-		for(int i=freeBlock; i<diskObj.getBlocksNum(); i++) {
-			if(diskObj.Read(i).equals(EMPTY_BLOCK))
+		for(int i=freeBlock; i!=freeBlock-1; i++) {
+			if(diskObj.Read(i).equals(EMPTY_BLOCK)) {
 				return i;
+			}
+			if(i==diskObj.getBlocksNum())
+				i = superBlock.getFileBegan();
 		}
 		return freeBlock;
 	}
