@@ -87,7 +87,6 @@ public class Disk {
 		setIn();
 		String blockLine = "";
 		for(int i=0; i<BLOCKS_NUM; i++) {
-			br.readLine();
 			if(i == blockNo) {
 				blockLine = br.readLine();
 				break;
@@ -106,13 +105,15 @@ public class Disk {
 		setOut();
 		
 		String disk = "";
-		bw.write(SuperBlock.getLine());
-		br.readLine();
-		for(int i = 1; i < BLOCKS_NUM; i++) {
+		for(int i = 0; i < BLOCKS_NUM; i++) {
 			disk = br.readLine();
 			bw.newLine();
 			bw.write(disk);
 		}
+		
+		
+		bw.write(disk);
+//		bw.flush();
 
 		closeIn();
 		closeOut();

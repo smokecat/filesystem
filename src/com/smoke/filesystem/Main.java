@@ -25,7 +25,6 @@ public class Main {
 			if (readStr.equals("y") || readStr.equals("Y")) {
 				System.out.println("Formating the DISK file now, don't close the programme now...");
 				smokeOS.formatDisk();
-				System.out.println("Success!");
 			}
 			sc.close();	
 			break;
@@ -33,10 +32,10 @@ public class Main {
 			System.out.println("Not found DISK file!");
 			System.out.println("Create a new DISK file...");
 			System.out.println("Formating success!");
+			smokeOS.formatDisk();
 		default:
 			break;
 		}
-		
 		
 	}
 	

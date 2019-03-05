@@ -89,6 +89,8 @@ public class FileSystem {
 		mkdir(getINode(getFileId(rootDir, "home")), 0, "root");
 		mkdir(getINode(getFileId(rootDir, "home")), 0, "smoke");
 		
+		
+		System.out.println("Success!");
 	}
 	
 //	创建目录

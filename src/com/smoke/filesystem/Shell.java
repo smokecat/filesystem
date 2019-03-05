@@ -11,8 +11,6 @@ public class Shell {
 		
 	}
 	
-	
-	
 	public void login() {
 		
 	}
@@ -21,6 +19,7 @@ public class Shell {
 		/*
 		 * 	
 		 */
+		
 	}
 	
 
