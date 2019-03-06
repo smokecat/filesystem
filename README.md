@@ -51,6 +51,11 @@ com.smoke.filesystem.Shell	：提供用户与文件系统交互的功能
 
 	- 若DISK文件已存在，读取DISK文件并装载文件系统（未实现）
 	- DISK文件不存在，创建一个空白DISK文件并格式化，即写入1024行64个0
+	
+	![格式化磁盘](resources/format_disk.png)
 
 - 在格式化的DISK文件上初始化文件系统
+	
+	![格式化磁盘](resources/initial_smokeOS.png)
+	
 	- 
