@@ -23,6 +23,8 @@ public class FileSystem {
 	private Disk diskObj;
 	private SuperBlock superBlock;
 	private INodeBlock[] iNodeBlocks;
+	private Shell smokeShell;
+	private INode root;
 	
 	public FileSystem() {
 		/*
@@ -33,6 +35,8 @@ public class FileSystem {
 		diskObj = new Disk();
 		
 		iNodeBlocks = new INodeBlock[50];
+		
+		smokeShell = new Shell(this);
 	}
 	
 	public int loadDisk() throws IOException {
@@ -83,6 +87,7 @@ public class FileSystem {
 		rootDir.setOwner(0);
 		write(rootDir);
 		writeFile(rootDir, new String("1 ."));
+		root = rootDir;
 		
 //		添加配置文件夹
 		mkdir(rootDir, 0, "etc");
@@ -137,7 +142,7 @@ public class FileSystem {
 		 * 	更新父目录
 		 * 	添加子文件
 		 */
-		int[] dirPtr = parent.getPtr();
+//		int[] dirPtr = parent.getPtr();
 		String parFile = readFile(parent);
 		parFile = (parFile + " " + child.getId() + " " + childName);
 		updateFile(parent, parFile);
@@ -221,6 +226,56 @@ public class FileSystem {
 		return file;
 	}
 	
+//	根据路径获得inode
+	public INode getINode(String path) throws IOException {
+		/*
+		 * 	
+		 */
+		path = path.strip();
+		if(!path.substring(0, 1).equals("/")) {
+			System.out.println("error: Illegal path ");
+			return null;
+		}
+		if(path.equals("/"))
+			return root;
+		String[] pathList = path.strip().split("/");
+		INode inode = root;
+		String[] childs = getDirChilds(inode);
+		for(int i=1; i<pathList.length; i++) {
+			boolean flag = false; 
+			for(int j=0; j<childs.length; j+=2) {
+				if(childs[j+1].equals(pathList[i])) {
+					inode = getINode(Integer.valueOf(childs[j]));
+					childs = getDirChilds(inode);
+					flag = true;
+					break;
+				}
+			}
+			if(!flag) {
+				System.out.println("error: not fund the file or directory");
+				return null;
+			}
+		}
+		return inode;
+		
+	}
+	
+//	获取目录文件列表
+	public String[] getDirChilds(INode parent) throws IOException {
+		/*
+		 * 
+		 */
+		if(parent.getFlag()!=1) {
+//			System.out.println("error: inode:"+parent.getId()+" isn't a directory");
+			return null;
+		}
+		String[] childs;
+		String childStr = readFile(parent);
+		childs = childStr.strip().split(" ");
+		return childs;
+			
+	}
+	
 //	更新文件
 	public void updateFile(INode inode,String file) throws IOException {
 		/*
@@ -238,14 +293,14 @@ public class FileSystem {
 		/*
 		 * 删除文件
 		 */
-		if(inode.getFlag()!=2) {
-			System.out.println("error: isn't a file.");
-			return;
-		}
+//		if(inode.getFlag()!=2) {
+//			System.out.println("error: isn't a file.");
+//			return;
+//		}
 		int[] filePtr = inode.getPtr();
 		int[] pos = inode.getPos();
 		iNodeBlocks[pos[0]-1].setiNode(new INode(), pos[1]);
-		
+		diskObj.write(pos[0],iNodeBlocks[pos[0]-1]);
 		deleteData(filePtr);
 	}
 	
@@ -279,7 +334,7 @@ public class FileSystem {
 //	
 	public String getChildName(INode inode, int cId) throws IOException {
 		/*
-		 * 	如果是目录inode，则根据cId获取文件名
+		 * 	如果inode是目录，则根据cId获取文件名
 		 */
 		int[] dirPtr = inode.getPtr();
 		String file = new String("");
@@ -313,6 +368,25 @@ public class FileSystem {
 		return -1;
 	}
 	
+//	获得inode的文件名
+	public String getINodeName(int id) throws IOException {
+		/*
+		 * 
+		 */
+		if(id==1)
+			return "root";
+		INode inode = getINode(id);
+		INode parent = inode.getParent();
+		String[] childs = getDirChilds(parent);
+		for(int i=0; i<childs.length; i+=2) {
+			if(Integer.valueOf(childs[i])==id) {
+				return childs[i+1];
+			}
+		}
+		return null;
+		
+	}
+	
 //	查找指定id的INode
 	public INode getINode(int id) {
 		for(int i=0; i<iNodeBlocks.length; i++) {
@@ -339,5 +413,12 @@ public class FileSystem {
 				i = superBlock.getFileBegan();
 		}
 		return freeBlock;
+	}
+
+	public Shell getShell() {
+		/*
+		 * 	获取Shell
+		 */
+		return smokeShell;
 	}
 }

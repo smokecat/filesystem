@@ -6,7 +6,7 @@ import java.util.Scanner;
 
 public class Main {
 
-	public static void main(String[] args) throws IOException {
+	public static void main(String[] args) throws IOException, InterruptedException {
 		/*
 		 * 	加载文件系统
 		 */
@@ -37,6 +37,13 @@ public class Main {
 			break;
 		}
 		
+		/*
+		 * 	加载Shell
+		 */
+		Shell smokeShell = smokeOS.getShell();
+		
+//		运行shell
+		smokeShell.run();
 	}
 	
 }
