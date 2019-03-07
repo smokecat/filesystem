@@ -30,7 +30,8 @@ $ cd filesystem
 - 运行打包好的jar文件，重新运行前需要把生成的DISK文件删除
 
 ```
-$ java -jav ./smokeOS.jar
+如果出现报错：java.lang.OutOfMemoryError:Java heap space，需要加上参数-Xmx3000m
+$ java -jar ./smokeOS.jar
 ```
 
 ## 程序描述
