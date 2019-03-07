@@ -6,7 +6,7 @@ smokeOS：a simulation of linux file system
 
 ## 运行程序
 
-- 运行环境：JDK 11
+- 运行环境：JDK  11
 
 ```
 C:\Users\Smoke> java -version
