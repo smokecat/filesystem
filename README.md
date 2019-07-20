@@ -33,6 +33,7 @@ $ cd filesystem
 
 ```
 如果出现报错：java.lang.OutOfMemoryError:Java heap space，需要加上参数-Xmx3000m
+
 $ java -jar ./smokeOS.jar
 ```
 
